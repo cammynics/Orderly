@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -9,7 +11,11 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   runApp(
     ChangeNotifierProvider(
-      create: (_) => OrderStore(),
+      create: (_) {
+        final store = OrderStore();
+        unawaited(store.load());
+        return store;
+      },
       child: const OrderlyApp(),
     ),
   );

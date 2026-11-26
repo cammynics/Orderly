@@ -4,34 +4,34 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:orderly/providers/order_store.dart';
 import 'package:orderly/screens/main_shell.dart';
 import 'package:orderly/screens/splash_screen.dart';
+import 'package:orderly/main.dart';
 import 'package:orderly/utils/validators.dart';
-import 'package:orderly/widgets/logo_painter.dart';
 
 void main() {
-  testWidgets('splash initializes before navigating to Orders', (tester) async {
+  testWidgets('splash shows the app icon for 5 seconds before Orders', (
+    tester,
+  ) async {
     final store = OrderStore();
+    await store.load();
     await tester.pumpWidget(
-      ChangeNotifierProvider(
-        create: (_) => store,
-        child: const MaterialApp(home: SplashScreen()),
+      ChangeNotifierProvider.value(
+        value: store,
+        child: const OrderlyApp(),
       ),
     );
     await tester.pump();
     expect(tester.takeException(), isNull);
-    expect(find.byType(SplashScreen), findsOneWidget);
-    final logoFinder = find.byWidgetPredicate(
-      (widget) => widget is CustomPaint && widget.painter is LogoPainter,
-    );
-    expect(tester.getSize(logoFinder).width, greaterThan(0));
-
-    await tester.pump(const Duration(milliseconds: 250));
-    final painter = tester.widget<CustomPaint>(logoFinder).painter!;
-    expect((painter as LogoPainter).progress, greaterThan(0));
-
-    await tester.pump(const Duration(milliseconds: 2500));
-    await tester.pumpAndSettle(const Duration(milliseconds: 100));
-
     expect(store.isLoading, isFalse);
+    expect(find.byType(SplashScreen), findsOneWidget);
+    expect(find.byType(ClipRRect), findsOneWidget);
+    final icon = tester.widget<Image>(
+      find.byKey(const ValueKey('orderly-splash-icon')),
+    );
+    expect((icon.image as AssetImage).assetName, 'assets/orderly_app_icon.png');
+    await tester.pump(const Duration(seconds: 4));
+    expect(find.byType(SplashScreen), findsOneWidget);
+    await tester.pump(const Duration(seconds: 1));
+    await tester.pumpAndSettle(const Duration(milliseconds: 100));
     expect(find.byType(SplashScreen), findsNothing);
     expect(find.byType(MainShell), findsOneWidget);
     expect(tester.takeException(), isNull);
